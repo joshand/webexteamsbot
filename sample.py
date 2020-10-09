@@ -243,3 +243,4 @@ bot.remove_command("/echo")
 if __name__ == "__main__":
     # Run Bot
     bot.run(host="0.0.0.0", port=5000)
+    # bot.run(host="0.0.0.0", port=5000, ssl_context='adhoc')
