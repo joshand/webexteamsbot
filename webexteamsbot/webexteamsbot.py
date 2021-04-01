@@ -29,7 +29,6 @@ class TeamsBot(Flask):
         webhook_resource="messages",
         webhook_event="created",
         approved_users=[],
-        user_approval_function=None,
         debug=False,
     ):
         """
@@ -50,10 +49,7 @@ class TeamsBot(Flask):
                 to create webhooks for.
                 [{"resource": "messages", "event": "created"},
                 {"resource": "attachmentActions", "event": "created"}]
-        :param approved_users: List of approved users (by email) to interact
-                with bot. Default all users.
-        :param user_approval_function: boolean function to approve users (by
-                email). Default all users.
+        :param approved_users: List of approved users (by email) to interact with bot. Default all users.
         :param debug: boolean value for debut messages
         """
 
@@ -78,7 +74,6 @@ class TeamsBot(Flask):
         self.teams_bot_url = teams_bot_url
         self.default_action = default_action
         self.approved_users = approved_users
-        self.user_approval_function = user_approval_function
         self.webhook_resource = webhook_resource
         self.webhook_event = webhook_event
         self.webhook_resource_event = webhook_resource_event
@@ -274,25 +269,6 @@ class TeamsBot(Flask):
         """
         return "I'm Alive"
 
-    def _user_approved(self, user_email):
-        """
-        Determines whether user_email is allowed by given approval parameters
-        :return: bool
-        """
-        if len(self.approved_users) > 0 and \
-           user_email not in self.approved_users:
-            # User NOT approved
-            sys.stderr.write("User: " + user_email +
-                             " is not in list of approved users. Ignoring.\n")
-            return False
-        if self.user_approval_function and \
-           not self.user_approval_function(user_email):
-            # User NOT approved
-            sys.stderr.write("User: " + user_email +
-                             " is not approved by function. Ignoring.\n")
-            return False
-        return True
-
     def process_incoming_message(self):
         """
         Process an incoming message, determine the command and action,
@@ -337,7 +313,9 @@ class TeamsBot(Flask):
             sys.stderr.write("Message from: " + message.personEmail + "\n")
 
             # Check if user is approved
-            if not self._user_approved(message.personEmail):
+            if len(self.approved_users) > 0 and message.personEmail not in self.approved_users:
+                # User NOT approved
+                sys.stderr.write("User: " + message.personEmail + " is not approved to interact with bot. Ignoring.\n")
                 return "Unapproved user"
 
             # Find the command that was sent, if any

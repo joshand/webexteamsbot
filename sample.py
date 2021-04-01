@@ -16,10 +16,19 @@ teams_token = os.getenv("TEAMS_BOT_TOKEN")
 bot_url = os.getenv("TEAMS_BOT_URL")
 bot_app_name = os.getenv("TEAMS_BOT_APP_NAME")
 
+# Example: How to limit the approved Webex Teams accounts for interaction
+#          Also uncomment the parameter in the instantiation of the new bot
+# List of email accounts of approved users to talk with the bot
+# approved_users = [
+#     "josmith@demo.local",
+# ]
+
 # If any of the bot environment variables are missing, terminate the app
 if not bot_email or not teams_token or not bot_url or not bot_app_name:
-    print("sample.py - Missing Environment Variable. Please see the 'Usage'"
-          " section in the README.")
+    print(
+        "sample.py - Missing Environment Variable. Please see the 'Usage'"
+        " section in the README."
+    )
     if not bot_email:
         print("TEAMS_BOT_EMAIL")
     if not teams_token:
@@ -32,15 +41,18 @@ if not bot_email or not teams_token or not bot_url or not bot_app_name:
 
 # Create a Bot Object
 #   Note: debug mode prints out more details about processing to terminal
+#   Note: the `approved_users=approved_users` line commented out and shown as reference
 bot = TeamsBot(
     bot_app_name,
     teams_bot_token=teams_token,
     teams_bot_url=bot_url,
     teams_bot_email=bot_email,
     debug=True,
-    webhook_resource_event=[{"resource": "messages", "event": "created"},
-                            {"resource": "attachmentActions",
-                             "event": "created"}]
+    # approved_users=approved_users,
+    webhook_resource_event=[
+        {"resource": "messages", "event": "created"},
+        {"resource": "attachmentActions", "event": "created"},
+    ],
 )
 
 
@@ -78,7 +90,7 @@ def do_something(incoming_msg):
 # put it inside of the "content" below, otherwise Webex won't understand
 # what you send it.
 def show_card(incoming_msg):
-    attachment = '''
+    attachment = """
     {
         "contentType": "application/vnd.microsoft.card.adaptive",
         "content": {
@@ -109,12 +121,12 @@ def show_card(incoming_msg):
             "version": "1.0"
         }
     }
-    '''
+    """
     backupmessage = "This is an example using Adaptive Cards."
 
-    c = create_message_with_attachment(incoming_msg.roomId,
-                                       msgtxt=backupmessage,
-                                       attachment=json.loads(attachment))
+    c = create_message_with_attachment(
+        incoming_msg.roomId, msgtxt=backupmessage, attachment=json.loads(attachment)
+    )
     print(c)
     return ""
 
@@ -137,11 +149,11 @@ def handle_cards(api, incoming_msg):
 # functionality)
 def create_message_with_attachment(rid, msgtxt, attachment):
     headers = {
-        'content-type': 'application/json; charset=utf-8',
-        'authorization': 'Bearer ' + teams_token
+        "content-type": "application/json; charset=utf-8",
+        "authorization": "Bearer " + teams_token,
     }
 
-    url = 'https://api.ciscospark.com/v1/messages'
+    url = "https://api.ciscospark.com/v1/messages"
     data = {"roomId": rid, "attachments": [attachment], "markdown": msgtxt}
     response = requests.post(url, json=data, headers=headers)
     return response.json()
@@ -151,11 +163,11 @@ def create_message_with_attachment(rid, msgtxt, attachment):
 # by webexteamssdk, but there are open PRs to add this functionality)
 def get_attachment_actions(attachmentid):
     headers = {
-        'content-type': 'application/json; charset=utf-8',
-        'authorization': 'Bearer ' + teams_token
+        "content-type": "application/json; charset=utf-8",
+        "authorization": "Bearer " + teams_token,
     }
 
-    url = 'https://api.ciscospark.com/v1/attachment/actions/' + attachmentid
+    url = "https://api.ciscospark.com/v1/attachment/actions/" + attachmentid
     response = requests.get(url, headers=headers)
     return response.json()
 
@@ -196,9 +208,7 @@ def current_time(incoming_msg):
 
     # Craft REST API URL to retrieve current time
     #   Using API from http://worldclockapi.com
-    u = "http://worldclockapi.com/api/json/{timezone}/now".format(
-        timezone=timezone
-    )
+    u = "http://worldclockapi.com/api/json/{timezone}/now".format(timezone=timezone)
     r = requests.get(u).json()
 
     # If an invalid timezone is provided, the serviceResponse will include
@@ -228,7 +238,7 @@ current_time_help += "_Example: **/time EST**_"
 bot.set_greeting(greeting)
 
 # Add new commands to the bot.
-bot.add_command('attachmentActions', '*', handle_cards)
+bot.add_command("attachmentActions", "*", handle_cards)
 bot.add_command("/showcard", "show an adaptive card", show_card)
 bot.add_command("/dosomething", "help for do something", do_something)
 bot.add_command(
